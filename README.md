@@ -52,7 +52,13 @@ var startReady = () => {
         
         for (let item of items) {
             const sizes = await getSizes(item);
-            item.style.display = sizes.some(size => sizeFilters.includes(size)) ? "" : "none";
+
+            //item.style.display = sizes.some(size => sizeFilters.includes(size)) ? "" : "none";
+
+            // 각 사이즈에 대해 필터 조건 중 하나라도 포함되어 있는지 확인
+            item.style.display = sizes.some(size => 
+                sizeFilters.some(filter => size.toUpperCase().includes(filter.toUpperCase()))
+            ) ? "" : "none";
         }
     };
     
@@ -91,16 +97,71 @@ var startReady = () => {
     // 버튼 컨테이너 생성
     const buttonContainer = document.createElement("div");
     buttonContainer.style.position = "fixed";
+    buttonContainer.style.left = "20px";
     buttonContainer.style.top = "150px";
-    buttonContainer.style.right = "20px";
     buttonContainer.style.width = "300px";
     buttonContainer.style.display = "flex";
+    buttonContainer.style.flexDirection = "column";
     buttonContainer.style.zIndex = "1000";
     buttonContainer.style.boxShadow = "2px 2px 10px rgba(0,0,0,0.2)";
+    
+    // 타이틀 추가 및 드래그 기능 설정
+    const titleDiv = document.createElement("div");
+    titleDiv.textContent = "Shopping Helper";
+    titleDiv.style.width = "100%";
+    titleDiv.style.height = "16px";
+    titleDiv.style.backgroundColor = "#f8f8f8";
+    titleDiv.style.fontWeight = "bold";
+    titleDiv.style.textAlign = "center";
+    titleDiv.style.padding = "5px 0";
+    titleDiv.style.borderRadius = "5px 5px 0 0";
+    titleDiv.style.borderBottom = "1px solid #ccc";
+    titleDiv.style.cursor = "move";
+
+    // 드래그 관련 변수
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+
+    // 마우스 이벤트 핸들러
+    titleDiv.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        initialX = e.clientX - buttonContainer.offsetLeft;
+        initialY = e.clientY - buttonContainer.offsetTop;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        
+        e.preventDefault();
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
+
+        // 화면 경계 체크
+        const maxX = window.innerWidth - buttonContainer.offsetWidth;
+        const maxY = window.innerHeight - buttonContainer.offsetHeight;
+        
+        currentX = Math.min(Math.max(0, currentX), maxX);
+        currentY = Math.min(Math.max(0, currentY), maxY);
+
+        buttonContainer.style.left = `${currentX}px`;
+        buttonContainer.style.top = `${currentY}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+    
+    // 버튼들을 담을 컨테이너 생성
+    const buttonsWrapper = document.createElement("div");
+    buttonsWrapper.style.display = "flex";
     
     // 사이즈 필터 입력창 생성 (120px로 확장)
     const sizeInput = document.createElement("input");
     sizeInput.type = "text";
+    sizeInput.value = "L,XL,XXL,52,54";
     sizeInput.placeholder = "Size (e.g. S,M,L)";
     sizeInput.style.width = "120px";
     sizeInput.style.textAlign = "center";
@@ -139,9 +200,14 @@ var startReady = () => {
     sortButton.style.fontWeight = "bold";
     sortButton.onclick = sortAscending;
     
-    buttonContainer.appendChild(sizeInput);
-    buttonContainer.appendChild(reverseButton);
-    buttonContainer.appendChild(sortButton);
+    // 버튼들을 새로운 wrapper에 추가
+    buttonsWrapper.appendChild(sizeInput);
+    buttonsWrapper.appendChild(reverseButton);
+    buttonsWrapper.appendChild(sortButton);
+
+    // 타이틀과 버튼들을 메인 컨테이너에 추가
+    buttonContainer.appendChild(titleDiv);
+    buttonContainer.appendChild(buttonsWrapper);
     document.body.appendChild(buttonContainer);
 };
 
