@@ -1,5 +1,5 @@
 # ShoppingHelper
-쇼핑을 간편하게..
+간편하게..
 
 # Use JavaScript & Css Plugin
 
