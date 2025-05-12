@@ -94,6 +94,81 @@ var startReady = () => {
         console.log("상품이 가격 기준으로 내림차순 정렬되었습니다.");
     };
     
+    // 검색 버튼 클릭 시 새 창에서 URL 열기 기능 추가
+    const modifyButtonsForNewWindow = () => {
+        // 모든 상품 검색 버튼에 이벤트 추가
+        const buttons = document.querySelectorAll("#goodsItemList > li > div > div > div > button");
+        buttons.forEach(button => {
+            const originalOnclick = button.getAttribute("onclick");
+            if (originalOnclick) {
+                // onclick 속성에서 상품 정보 추출
+                const goodsNoMatch = originalOnclick.match(/goods_no\s*:\s*'([^']+)'/);
+                const saleShopDiviCdMatch = originalOnclick.match(/sale_shop_divi_cd\s*:\s*'([^']+)'/);
+                const saleShopNoMatch = originalOnclick.match(/sale_shop_no\s*:\s*'([^']+)'/);
+                const contsFormCdMatch = originalOnclick.match(/conts_form_cd\s*:\s*'([^']+)'/);
+                const contsDistNoMatch = originalOnclick.match(/conts_dist_no\s*:\s*'([^']+)'/);
+                const contsDiviCdMatch = originalOnclick.match(/conts_divi_cd\s*:\s*'([^']+)'/);
+                const relNoMatch = originalOnclick.match(/rel_no\s*:\s*'([^']+)'/);
+                const relDiviCdMatch = originalOnclick.match(/rel_divi_cd\s*:\s*'([^']+)'/);
+                
+                if (goodsNoMatch && saleShopDiviCdMatch && saleShopNoMatch) {
+                    const goodsNo = goodsNoMatch[1];
+                    const saleShopDiviCd = saleShopDiviCdMatch[1];
+                    const saleShopNo = saleShopNoMatch[1];
+                    const contsFormCd = contsFormCdMatch ? contsFormCdMatch[1] : '100';
+                    const contsDistNo = contsDistNoMatch ? contsDistNoMatch[1] : goodsNo;
+                    const contsDiviCd = contsDiviCdMatch ? contsDiviCdMatch[1] : '20';
+                    const relNo = relNoMatch ? relNoMatch[1] : goodsNo;
+                    const relDiviCd = relDiviCdMatch ? relDiviCdMatch[1] : '10';
+                    
+                    // URL 생성
+                    const url = `https://www.sivillage.com/goods/initDetailGoods.siv?goods_no=${goodsNo}&sale_shop_divi_cd=${saleShopDiviCd}&sale_shop_no=${saleShopNo}&conts_form_cd=${contsFormCd}&conts_dist_no=${contsDistNo}&conts_divi_cd=${contsDiviCd}&rel_no=${relNo}&rel_divi_cd=${relDiviCd}`;
+                    
+                    // 새 이벤트 핸들러 설정
+                    button.onclick = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.open(url, '_blank');
+                        return false;
+                    };
+                    
+                    // 버튼 스타일 변경하여 수정되었음을 표시
+                    button.style.backgroundColor = "#3498db";
+                    button.style.color = "white";
+                }
+            }
+        });
+        
+        // 상품 링크(a 태그)에 대한 처리
+        const productLinks = document.querySelectorAll("#goodsItemList > li > div > a");
+        productLinks.forEach(link => {
+            const li = link.closest('li');
+            if (!li) return;
+            
+            const goodsNo = li.getAttribute("data-goods_no");
+            if (!goodsNo) return;
+            
+            // 기존 이벤트 방지하고 새 창 열기
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // 필요한 파라미터들을 찾아서 URL 구성
+                // 버튼과 동일한 URL 파라미터 구조 사용
+                const url = `https://www.sivillage.com/goods/initDetailGoods.siv?goods_no=${goodsNo}&sale_shop_divi_cd=12&sale_shop_no=2502169167&conts_form_cd=100&conts_dist_no=${goodsNo}&conts_divi_cd=20&rel_no=${goodsNo}&rel_divi_cd=10`;
+                
+                window.open(url, '_blank');
+                return false;
+            }, true);
+            
+            // 수정된 링크 스타일 변경
+            link.style.textDecoration = "underline";
+            link.style.textDecorationColor = "#3498db";
+        });
+        
+        console.log("모든 검색 버튼과 상품 링크가 새 창에서 열리도록 수정되었습니다.");
+    };
+    
     // 버튼 컨테이너 생성
     const buttonContainer = document.createElement("div");
     buttonContainer.style.position = "fixed";
@@ -174,6 +249,19 @@ var startReady = () => {
         }
     };
     
+    // 링크 수정 버튼 생성
+    const modifyLinksButton = document.createElement("button");
+    modifyLinksButton.textContent = "새창";
+    modifyLinksButton.style.flex = "3";
+    modifyLinksButton.style.padding = "10px";
+    modifyLinksButton.style.backgroundColor = "#3498db";
+    modifyLinksButton.style.color = "#ffffff";
+    modifyLinksButton.style.border = "none";
+    modifyLinksButton.style.borderRight = "1px solid #ffffff";
+    modifyLinksButton.style.cursor = "pointer";
+    modifyLinksButton.style.fontWeight = "bold";
+    modifyLinksButton.onclick = modifyButtonsForNewWindow;
+    
     // 역정렬 버튼 생성 및 스타일 적용 (왼쪽 30%)
     const reverseButton = document.createElement("button");
     reverseButton.textContent = "역";
@@ -202,18 +290,26 @@ var startReady = () => {
     
     // 버튼들을 새로운 wrapper에 추가
     buttonsWrapper.appendChild(sizeInput);
+    buttonsWrapper.appendChild(modifyLinksButton);
     buttonsWrapper.appendChild(reverseButton);
     buttonsWrapper.appendChild(sortButton);
 
     // 타이틀과 버튼들을 메인 컨테이너에 추가
     buttonContainer.appendChild(titleDiv);
     buttonContainer.appendChild(buttonsWrapper);
+    
     document.body.appendChild(buttonContainer);
+    
+    // 페이지 로드 시 자동으로 링크 수정 실행
+    setTimeout(() => {
+        modifyButtonsForNewWindow();
+    }, 1000);
 };
 
 setTimeout(function(){
     startReady();
 }, 2000);
+
 ```
 
 > CSS side
